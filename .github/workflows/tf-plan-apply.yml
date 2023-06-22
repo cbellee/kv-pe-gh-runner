@@ -133,7 +133,6 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      working-directory: ${{ github.workspace }}/iac
       run: terraform init
 
     # Download saved plan from artifacts  
@@ -144,5 +143,4 @@ jobs:
 
     # Terraform Apply
     - name: Terraform Apply
-      working-directory: ${{ github.workspace }}/iac
       run: terraform apply -auto-approve tfplan
