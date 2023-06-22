@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">=1.3.0"
+  required_version = ">=1.5.0"
 
 backend "azurerm" {
     subscription_id        = "b2375b5f-8dab-4436-b87c-32bc7fdce5d0"
