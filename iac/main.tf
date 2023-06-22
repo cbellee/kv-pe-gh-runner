@@ -1,9 +1,5 @@
 locals {
   private_dns_zones = {
-    azure-automation-net                        = "privatelink.azure-automation.net"
-    database-windows-net                        = "privatelink.database.windows.net"
-    privatelink-sql-azuresynapse-net            = "privatelink.sql.azuresynapse.net"
-    privatelink-dev-azuresynapse-net            = "privatelink.dev.azuresynapse.net"
     privatelink-blob-core-windows-net           = "privatelink.blob.core.windows.net"
     privatelink-vaultcore-azure-net             = "privatelink.vaultcore.azure.net"
   }
@@ -71,8 +67,21 @@ resource "azurerm_bastion_host" "bastion" {
   }
 }
 
-resource "azurerm_network_interface" "nic" {
+/* resource "azurerm_network_interface" "nic" {
   name                = "win-vm-01-nic"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  ip_configuration {
+    name                          = "ipconfig"
+    subnet_id                     = azurerm_subnet.Github_Runner_Subnet.id
+    private_ip_address_allocation = "Dynamic"
+    private_ip_address_version    = "IPv4"
+  }
+} */
+
+resource "azurerm_network_interface" "linux_vm_nic" {
+  name                = "linux-vm-01-nic"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -84,12 +93,16 @@ resource "azurerm_network_interface" "nic" {
   }
 }
 
-resource "azurerm_virtual_machine" "vm" {
+/* resource "azurerm_virtual_machine" "win_vm" {
   name                  = "win-vm-01"
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   network_interface_ids = [azurerm_network_interface.nic.id]
   vm_size               = "Standard_DS1_v2"
+
+  identity {
+    type = "SystemAssigned"
+  }
 
   storage_image_reference {
     publisher = "MicrosoftWindowsServer"
@@ -110,6 +123,51 @@ resource "azurerm_virtual_machine" "vm" {
     admin_username = var.admin_username
     admin_password = var.admin_password
   }
+} */
+
+resource "azurerm_virtual_machine" "linux_vm" {
+  name                  = "linux-vm-01"
+  location              = azurerm_resource_group.rg.location
+  resource_group_name   = azurerm_resource_group.rg.name
+  network_interface_ids = [azurerm_network_interface.linux_vm_nic.id]
+  vm_size               = "Standard_DS1_v2"
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  storage_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  storage_os_disk {
+    name              = "linux-vm-01-osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Premium_LRS"
+  }
+
+  os_profile_linux_config {
+    disable_password_authentication = true
+    ssh_keys {
+      path     = "/home/${var.admin_username}/.ssh/authorized_keys"
+      key_data = var.ssh_public_key
+    }
+  }
+
+  os_profile {
+    computer_name  = "linux-vm-01"
+    admin_username = var.admin_username
+  }
+}
+
+resource "azurerm_role_assignment" "github_runner_contributor_role" {
+  role_definition_name = "Contributor"
+  principal_id = azurerm_virtual_machine.linux_vm.identity.0.principal_id
+  scope = azurerm_resource_group.rg.id
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "private_dns_network_links" {
@@ -126,7 +184,7 @@ resource "random_string" "random" {
   special = false
 }
 
-resource "azurerm_key_vault" "main" {
+resource "azurerm_key_vault" "kv" {
   name                        = "${var.location}-${random_string.random.result}"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
@@ -138,8 +196,8 @@ resource "azurerm_key_vault" "main" {
   sku_name                    = "standard"
 }
 
-resource "azurerm_private_endpoint" "main" {
-  name                = "${azurerm_key_vault.main.name}-pe"
+resource "azurerm_private_endpoint" "kv_pe" {
+  name                = "${azurerm_key_vault.kv.name}-pe"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   subnet_id           = azurerm_subnet.Private_Endpoint_Subnet.id
@@ -149,15 +207,22 @@ resource "azurerm_private_endpoint" "main" {
   }
   private_service_connection {
     is_manual_connection           = false
-    private_connection_resource_id = azurerm_key_vault.main.id
-    name                           = "${azurerm_key_vault.main.name}-psc"
+    private_connection_resource_id = azurerm_key_vault.kv.id
+    name                           = "${azurerm_key_vault.kv.name}-psc"
     subresource_names              = ["vault"]
   }
-  depends_on = [azurerm_key_vault.main]
+  depends_on = [azurerm_key_vault.kv]
 }
 
-resource "azurerm_role_assignment" "kv_admin" {
-  scope                = azurerm_key_vault.main.id
+resource "azurerm_key_vault_secret" "secret" {
+  content_type = "text/plain"
+  key_vault_id = azurerm_key_vault.kv.id
+  name  = "secret"
+  value = "1234567890"
+}
+
+/* resource "azurerm_role_assignment" "kv_admin" {
+  scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
   principal_id         = var.object_id
-}
+} */
