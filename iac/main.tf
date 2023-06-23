@@ -174,7 +174,7 @@ resource "azurerm_key_vault_secret" "secret" {
   key_vault_id = azurerm_key_vault.kv.id
   name  = "secret"
   value = "1234567890"
-  depends_on = [ azurerm_role_assignment.kv_admin ]
+  # depends_on = [ azurerm_role_assignment.kv_admin ]
 }
 
 /* resource "azurerm_role_assignment" "kv_admin" {
