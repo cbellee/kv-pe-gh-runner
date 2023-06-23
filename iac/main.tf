@@ -150,6 +150,10 @@ resource "azurerm_key_vault" "kv" {
   purge_protection_enabled    = false
   sku_name                    = "standard"
   public_network_access_enabled = false
+  network_acls {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+  }
 }
 
 resource "azurerm_private_endpoint" "kv_pe" {
@@ -173,19 +177,13 @@ resource "azurerm_private_endpoint" "kv_pe" {
 resource "azurerm_key_vault_secret" "secret" {
   content_type = "text/plain"
   key_vault_id = azurerm_key_vault.kv.id
-  name  = "secret-2"
+  name  = "mysecret"
   value = "1234567890"
+  depends_on = [ azurerm_role_assignment.github_runner_contributor_role ]
 }
 
-resource "azurerm_key_vault_secret" "secret3" {
-  content_type = "text/plain"
-  key_vault_id = azurerm_key_vault.kv.id
-  name  = "secret-3"
-  value = "1234567890"
+resource "azurerm_role_assignment" "kv_admin" {
+  scope              = azurerm_key_vault.kv.id
+  role_definition_id = "b86a8fe4-44ce-4948-aee5-eccb2c155cd7" // "Key Vault Secrets Officer"
+  principal_id       = azurerm_virtual_machine.linux_vm.identity.0.principal_id
 }
-
-/* resource "azurerm_role_assignment" "kv_admin" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Administrator"
-  principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
-} */
