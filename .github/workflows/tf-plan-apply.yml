@@ -72,6 +72,7 @@ jobs:
         name: tfplan
         path: | 
           ${{ github.workspace }}/iac/tfplan
+          ${{ github.workspace }}/iac/providers.tf
 
         
     # Create string output of Terraform Plan
