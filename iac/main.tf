@@ -176,7 +176,8 @@ resource "azurerm_private_endpoint" "kv_pe" {
 
 resource "azurerm_role_assignment" "kv_admin" {
   scope              = azurerm_key_vault.kv.id
-  role_definition_id = "b86a8fe4-44ce-4948-aee5-eccb2c155cd7" // "Key Vault Secrets Officer"
+  name = "Key Vault Secrets Officer"
+  # role_definition_id = "b86a8fe4-44ce-4948-aee5-eccb2c155cd7" // "Key Vault Secrets Officer"
   principal_id       = azurerm_virtual_machine.linux_vm.identity.0.principal_id
 }
 
