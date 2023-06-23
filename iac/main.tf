@@ -67,19 +67,6 @@ resource "azurerm_bastion_host" "bastion" {
   }
 }
 
-/* resource "azurerm_network_interface" "nic" {
-  name                = "win-vm-01-nic"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-
-  ip_configuration {
-    name                          = "ipconfig"
-    subnet_id                     = azurerm_subnet.Github_Runner_Subnet.id
-    private_ip_address_allocation = "Dynamic"
-    private_ip_address_version    = "IPv4"
-  }
-} */
-
 resource "azurerm_network_interface" "linux_vm_nic" {
   name                = "linux-vm-01-nic"
   location            = azurerm_resource_group.rg.location
@@ -92,38 +79,6 @@ resource "azurerm_network_interface" "linux_vm_nic" {
     private_ip_address_version    = "IPv4"
   }
 }
-
-/* resource "azurerm_virtual_machine" "win_vm" {
-  name                  = "win-vm-01"
-  location              = azurerm_resource_group.rg.location
-  resource_group_name   = azurerm_resource_group.rg.name
-  network_interface_ids = [azurerm_network_interface.nic.id]
-  vm_size               = "Standard_DS1_v2"
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  storage_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2022-datacenter-azure-edition"
-    version   = "latest"
-  }
-
-  storage_os_disk {
-    name              = "win-vm-01-osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Premium_LRS"
-  }
-
-  os_profile {
-    computer_name  = "win-vm-01"
-    admin_username = var.admin_username
-    admin_password = var.admin_password
-  }
-} */
 
 resource "azurerm_virtual_machine" "linux_vm" {
   name                  = "linux-vm-01"
@@ -221,8 +176,8 @@ resource "azurerm_key_vault_secret" "secret" {
   value = "1234567890"
 }
 
-/* resource "azurerm_role_assignment" "kv_admin" {
+resource "azurerm_role_assignment" "kv_admin" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
-  principal_id         = var.object_id
-} */
+  principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
+}
