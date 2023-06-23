@@ -177,8 +177,8 @@ resource "azurerm_key_vault_secret" "secret" {
   depends_on = [ azurerm_role_assignment.kv_admin ]
 }
 
-resource "azurerm_role_assignment" "kv_admin" {
+/* resource "azurerm_role_assignment" "kv_admin" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
   principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
-}
+} */
