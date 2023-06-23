@@ -72,7 +72,7 @@ jobs:
         name: tfplan
         path: | 
           ${{ github.workspace }}/iac/tfplan
-          ${{ github.workspace }}/iac/.terraform.lock.hcl
+
         
     # Create string output of Terraform Plan
     - name: Create String Output
