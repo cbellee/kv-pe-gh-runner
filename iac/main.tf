@@ -149,6 +149,7 @@ resource "azurerm_key_vault" "kv" {
   soft_delete_retention_days  = 7
   purge_protection_enabled    = false
   sku_name                    = "standard"
+  public_network_access_enabled = false
 }
 
 resource "azurerm_private_endpoint" "kv_pe" {
@@ -172,7 +173,7 @@ resource "azurerm_private_endpoint" "kv_pe" {
 resource "azurerm_key_vault_secret" "secret" {
   content_type = "text/plain"
   key_vault_id = azurerm_key_vault.kv.id
-  name  = "secret"
+  name  = "secret-2"
   value = "1234567890"
   # depends_on = [ azurerm_role_assignment.kv_admin ]
 }

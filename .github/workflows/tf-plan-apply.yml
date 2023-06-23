@@ -23,7 +23,7 @@ env:
 
 jobs:
   terraform-init-plan-apply:
-    name: 'Terraform Plan'
+    name: 'Terraform Init, Plan & Apply'
     runs-on: self-hosted
     env:
       #this is needed since we are running terraform with read-only permissions
