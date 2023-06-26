@@ -151,7 +151,7 @@ resource "azurerm_storage_account" "sa" {
   default_to_oauth_authentication = true
   shared_access_key_enabled = false
   enable_https_traffic_only = true
-  network_rules {
+  network_acls {
     default_action = "Deny"
     bypass         = "AzureServices"
   }
