@@ -158,7 +158,7 @@ resource "azurerm_storage_account" "sa" {
   public_network_access_enabled = false
 }
 
-resource "azurerm_storage_account_container" "sa_container" {
+resource "azurerm_storage_container" "sa_container" {
   name                  = "test"
   storage_account_name  = azurerm_storage_account.sa.name
   container_access_type = "private"
@@ -210,7 +210,7 @@ resource "azurerm_storage_blob" "blobs" {
  
   name                   = trim(each.key, "uploads/")
   storage_account_name   = azurerm_storage_account.sa.name
-  storage_container_name = azurerm_storage_account_container.sa_container.name
+  storage_container_name = azurerm_storage_container.sa_container.name
   type                   = "Block"
   source                 = each.key
   depends_on = [ azurerm_role_assignment.sa_data_contributor ]
