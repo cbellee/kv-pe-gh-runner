@@ -201,7 +201,7 @@ resource "azurerm_key_vault" "kv" {
 
 resource "azurerm_role_assignment" "sa_data_contributor" {
   scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Storage Account Data Contributor"
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
 }
 
