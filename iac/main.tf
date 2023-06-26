@@ -152,15 +152,15 @@ resource "azurerm_storage_account" "sa" {
   default_to_oauth_authentication = true
   shared_access_key_enabled = true
   enable_https_traffic_only = true
+  public_network_access_enabled = false
   network_rules {
     default_action = "Deny"
-    bypass         = ["AzureServices"]
+    bypass         = ["AzureServices", "Logging", "Metrics"]
   }
-  public_network_access_enabled = false
 }
 
 resource "azurerm_storage_container" "sa_container" {
-  name                  = "test"
+  name                  = "test-container"
   storage_account_name  = azurerm_storage_account.sa.name
   container_access_type = "private"
 }
@@ -180,12 +180,21 @@ resource "azurerm_private_endpoint" "sa_pe" {
     name                           = "${azurerm_storage_account.sa.name}-psc"
     subresource_names              = ["blob"]
   }
-  depends_on = [azurerm_storage_account.sa]
+  depends_on = [
+    azurerm_storage_account.sa, 
+    azurerm_storage_container.sa_container
+  ]
 }
 
 resource "azurerm_role_assignment" "sa_data_contributor" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
+}
+
+resource "azurerm_role_assignment" "sa_contributor" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Storage Account Contributor"
   principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
 }
 
