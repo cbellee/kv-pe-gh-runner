@@ -146,7 +146,7 @@ resource "azurerm_storage_account" "sa" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   tags                     = var.tags
-  access_tier = "hot"
+  access_tier = "Hot"
   account_kind = "StorageV2"
   default_to_oauth_authentication = true
   shared_access_key_enabled = false
