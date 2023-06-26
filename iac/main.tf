@@ -139,6 +139,7 @@ resource "random_string" "random" {
   special = false
 }
 
+// Storage
 resource "azurerm_storage_account" "sa" {
   name                     = lower("${var.location}${random_string.random.result}")
   resource_group_name      = azurerm_resource_group.rg.name
@@ -149,7 +150,7 @@ resource "azurerm_storage_account" "sa" {
   access_tier = "Hot"
   account_kind = "StorageV2"
   default_to_oauth_authentication = true
-  shared_access_key_enabled = false
+  shared_access_key_enabled = true
   enable_https_traffic_only = true
   network_rules {
     default_action = "Deny"
@@ -182,23 +183,6 @@ resource "azurerm_private_endpoint" "sa_pe" {
   depends_on = [azurerm_storage_account.sa]
 }
 
-resource "azurerm_key_vault" "kv" {
-  name                        = "${var.location}-${random_string.random.result}"
-  location                    = azurerm_resource_group.rg.location
-  resource_group_name         = azurerm_resource_group.rg.name
-  enabled_for_disk_encryption = true
-  tenant_id                   = var.tenant_id
-  enable_rbac_authorization   = true
-  soft_delete_retention_days  = 7
-  purge_protection_enabled    = false
-  sku_name                    = "standard"
-  public_network_access_enabled = false
-  network_acls {
-    default_action = "Deny"
-    bypass         = "AzureServices"
-  }
-}
-
 resource "azurerm_role_assignment" "sa_data_contributor" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Storage Blob Data Contributor"
@@ -214,6 +198,23 @@ resource "azurerm_storage_blob" "blobs" {
   type                   = "Block"
   source                 = each.key
   depends_on = [ azurerm_role_assignment.sa_data_contributor ]
+}
+
+// KeyVault
+resource "azurerm_key_vault" "kv" {
+  name                        = "${var.location}-${random_string.random.result}"
+  location                    = azurerm_resource_group.rg.location
+  resource_group_name         = azurerm_resource_group.rg.name
+  tenant_id                   = var.tenant_id
+  enable_rbac_authorization   = true
+  soft_delete_retention_days  = 7
+  purge_protection_enabled    = false
+  sku_name                    = "standard"
+  public_network_access_enabled = false
+  network_acls {
+    default_action = "Deny"
+    bypass         = "AzureServices"
+  }
 }
 
 resource "azurerm_private_endpoint" "kv_pe" {
