@@ -165,7 +165,7 @@ resource "azurerm_storage_container" "sa_container" {
 }
 
 resource "azurerm_private_endpoint" "sa_pe" {
-  name                = "${azurerm_storage_account.name}-pe"
+  name                = "${azurerm_storage_account.sa.name}-pe"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   subnet_id           = azurerm_subnet.Private_Endpoint_Subnet.id
