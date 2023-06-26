@@ -153,7 +153,7 @@ resource "azurerm_storage_account" "sa" {
   enable_https_traffic_only = true
   network_rules {
     default_action = "Deny"
-    bypass         = "AzureServices"
+    bypass         = ["AzureServices"]
   }
   public_network_access_enabled = false
 }
