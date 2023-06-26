@@ -149,6 +149,7 @@ resource "azurerm_storage_account" "sa" {
   tags                     = var.tags
   access_tier = "Hot"
   account_kind = "StorageV2"
+
   default_to_oauth_authentication = true
   shared_access_key_enabled = true
   enable_https_traffic_only = true
@@ -178,11 +179,10 @@ resource "azurerm_private_endpoint" "sa_pe" {
     is_manual_connection           = false
     private_connection_resource_id = azurerm_storage_account.sa.id
     name                           = "${azurerm_storage_account.sa.name}-psc"
-    subresource_names              = ["blob"]
+    subresource_names              = ["Blob"]
   }
   depends_on = [
-    azurerm_storage_account.sa, 
-    azurerm_storage_container.sa_container
+    azurerm_storage_account.sa
   ]
 }
 
