@@ -139,6 +139,49 @@ resource "random_string" "random" {
   special = false
 }
 
+resource "azurerm_storage_account" "sa" {
+  name                     = "${var.location}${random_string.random.result}"
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  tags                     = var.tags
+  access_tier = "hot"
+  account_kind = "StorageV2"
+  default_to_oauth_authentication = true
+  shared_access_key_enabled = false
+  enable_https_traffic_only = true
+  network_rules {
+    default_action = "Deny"
+    bypass         = "AzureServices"
+  }
+  public_network_access_enabled = false
+}
+
+resource "azurerm_storage_account_container" "sa_container" {
+  name                  = "test"
+  storage_account_name  = azurerm_storage_account.sa.name
+  container_access_type = "private"
+}
+
+resource "azurerm_private_endpoint" "sa_pe" {
+  name                = "${azurerm_storage_account.name}-pe"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  subnet_id           = azurerm_subnet.Private_Endpoint_Subnet.id
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [azurerm_private_dns_zone.private_dns_zones["privatelink-blob-core-windows-net"].id]
+  }
+  private_service_connection {
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_storage_account.sa.id
+    name                           = "${azurerm_storage_account.sa.name}-psc"
+    subresource_names              = ["blob"]
+  }
+  depends_on = [azurerm_storage_account.sa]
+}
+
 resource "azurerm_key_vault" "kv" {
   name                        = "${var.location}-${random_string.random.result}"
   location                    = azurerm_resource_group.rg.location
@@ -154,6 +197,23 @@ resource "azurerm_key_vault" "kv" {
     default_action = "Deny"
     bypass         = "AzureServices"
   }
+}
+
+resource "azurerm_role_assignment" "sa_data_contributor" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Storage Account Data Contributor"
+  principal_id         = azurerm_virtual_machine.linux_vm.identity.0.principal_id
+}
+
+resource "azurerm_storage_blob" "blobs" {
+  for_each = fileset(path.cwd, "uploads/*")
+ 
+  name                   = trim(each.key, "uploads/")
+  storage_account_name   = azurerm_storage_account.sa.name
+  storage_container_name = azurerm_storage_account_container.sa_container.name
+  type                   = "Block"
+  source                 = each.key
+  depends_on = [ azurerm_role_assignment.sa_data_contributor ]
 }
 
 resource "azurerm_private_endpoint" "kv_pe" {
